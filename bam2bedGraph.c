@@ -119,19 +119,18 @@ int fetch_func(const bam1_t *b, void *data) {
 	DataBuf *databuf=(DataBuf *)data;
 	uint32_t *cigar = bam1_cigar(b);
 	const bam1_core_t *c = &b->core;
-	if (c->flag&BAM_FUNMAP) return 0;
-	if (b->core.tid < 0) return 0;
+	if (c->flag&BAM_DEF_MASK || b->core.tid < 0) return 0;
 	int i, l;
 	unsigned int temp_start= c->pos;
 	for (i = l = 0; i < c->n_cigar; ++i) {
-		int op = cigar[i]&0xf;
+		int op = bam_cigar_op(cigar[i]);
 		if (op == BAM_CINS) continue;
 		if ( op == BAM_CDEL || op == BAM_CREF_SKIP){
-			l = cigar[i]>>4;
+			l = bam_cigar_oplen(cigar[i]);
 			temp_start+=l;
 		}
 		else if (op == BAM_CMATCH ) {
-			l = cigar[i]>>4;
+			l = bam_cigar_oplen(cigar[i]);
 			insertInt2Hash(databuf->Start,temp_start);
 			temp_start+=l;
 			insertInt2Hash(databuf->End,temp_start);
